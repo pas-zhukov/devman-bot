@@ -47,15 +47,15 @@ def main():
             continue
         dvmn_lpoll_response.raise_for_status()
 
-        list_of_reviews = dvmn_lpoll_response.json()
-        if list_of_reviews["status"] == "timeout":
-            timestamp_param['timestamp'] = list_of_reviews["timestamp_to_request"]
-        elif list_of_reviews["status"] == "found":
+        reviews = dvmn_lpoll_response.json()
+        if reviews["status"] == "timeout":
+            timestamp_param['timestamp'] = reviews["timestamp_to_request"]
+        elif reviews["status"] == "found":
             try:
-                send_notification(bot, chat_id, list_of_reviews)
+                send_notification(bot, chat_id, reviews)
             except Exception as e:
                 print(f'Error sending notification: {e}')
-            timestamp_param['timestamp'] = list_of_reviews["last_attempt_timestamp"]
+            timestamp_param['timestamp'] = reviews["last_attempt_timestamp"]
 
 
 def send_notification(bot: telebot.TeleBot, chat_id: int, response_json: dict):
