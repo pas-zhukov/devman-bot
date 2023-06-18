@@ -18,14 +18,13 @@ def main():
         help="ID чата, в который будут отправляться уведомления."
     )
     args = arg_parser.parse_args()
-    CHAT_ID = args.id
+    chat_id = args.id
 
-    #  Reading tokens from .env
     load_dotenv()
-    API_TOKEN = os.getenv("BOT_TOKEN")
+    api_token = os.getenv("BOT_TOKEN")
 
     #  Launching the bot.
-    bot = telebot.TeleBot(API_TOKEN)
+    bot = telebot.TeleBot(api_token)
 
     #  Request URL and parameters setup.
     dvmn_lpoll_url = "https://dvmn.org/api/long_polling/"
@@ -48,15 +47,15 @@ def main():
             continue
         dvmn_lpoll_response.raise_for_status()
 
-        dvmn_response_structured = dvmn_lpoll_response.json()
-        if dvmn_response_structured["status"] == "timeout":
-            timestamp_param['timestamp'] = dvmn_response_structured["timestamp_to_request"]
-        elif dvmn_response_structured["status"] == "found":
+        list_of_reviews = dvmn_lpoll_response.json()
+        if list_of_reviews["status"] == "timeout":
+            timestamp_param['timestamp'] = list_of_reviews["timestamp_to_request"]
+        elif list_of_reviews["status"] == "found":
             try:
-                send_notification(bot, CHAT_ID, dvmn_response_structured)
+                send_notification(bot, chat_id, list_of_reviews)
             except Exception as e:
                 print(f'Error sending notification: {e}')
-            timestamp_param['timestamp'] = dvmn_response_structured["last_attempt_timestamp"]
+            timestamp_param['timestamp'] = list_of_reviews["last_attempt_timestamp"]
 
 
 def send_notification(bot: telebot.TeleBot, chat_id: int, response_json: dict):
