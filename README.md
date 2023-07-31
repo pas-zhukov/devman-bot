@@ -7,7 +7,7 @@
 ## Установка зависимостей
 Первым делом, скачайте код:
 ``` 
-git clone https://github.com/pas-zhukov/wine.git
+git clone https://github.com/pas-zhukov/devman-bot.git
 ```
 Для работы скрипта понадобятся библиотеки, перечисленные в `reqirements.txt`.
 Их можно установить при помощи pip:

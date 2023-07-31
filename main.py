@@ -7,15 +7,14 @@ import telebot
 
 
 def main():
-    """
-    Parsing chat_id argument.
-    """
+    #  Parsing Chat ID argument
     arg_parser = ArgumentParser(
         description='Бот для уведомлений о проверке заданий на dvmn.org'
     )
     arg_parser.add_argument(
         'id',
-        help="ID чата, в который будут отправляться уведомления."
+        help="ID чата, в который будут отправляться уведомления.",
+        type=int
     )
     args = arg_parser.parse_args()
     chat_id = args.id
@@ -58,14 +57,22 @@ def main():
             timestamp_param['timestamp'] = reviews["last_attempt_timestamp"]
 
 
-def send_notification(bot: telebot.TeleBot, chat_id: int, response_json: dict):
-    """
+def send_notification(bot: telebot.TeleBot, chat_id: int, reviews: dict):
+    """Send notification
+
     Sends a notification to the specified chat ID
     with information about a new attempt on a lesson.
 
-    """
+    Args:
+        bot (TeleBot): A bot object used to send message
+        chat_id (int): ID of a chat to where send the notification
+        reviews (dict): Json-format reviews from Devman API response
 
-    attempt = response_json['new_attempts'][0]
+    Returns:
+        Message: Message object of message that has been sent
+
+    """
+    attempt = reviews['new_attempts'][0]
     notification_text = f"""
         У Вас проверили работу «{attempt['lesson_title']}\n
         {'К сожалению, в работе нашлись ошибки.' if attempt['is_negative'] else
@@ -74,10 +81,12 @@ def send_notification(bot: telebot.TeleBot, chat_id: int, response_json: dict):
         Ссылка на урок: {attempt['lesson_url']}
     """
 
-    bot.send_message(
+    msg = bot.send_message(
         chat_id,
         tw.dedent(notification_text),
         disable_web_page_preview=True)
+
+    return msg
 
 
 if __name__ == "__main__":
