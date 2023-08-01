@@ -9,7 +9,7 @@ import logging
 
 def main():
     logger = telebot.logger
-    telebot.logger.setLevel(logging.DEBUG)
+    telebot.logger.setLevel(logging.INFO)
     logging.info('Commence logging.')
 
     #  Parsing Chat ID argument
@@ -23,6 +23,7 @@ def main():
     )
     args = arg_parser.parse_args()
     chat_id = args.id
+    logging.debug(f'Chat id id: {chat_id}')
 
     load_dotenv()
     api_token = os.getenv("BOT_TOKEN")
