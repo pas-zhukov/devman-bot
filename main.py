@@ -10,6 +10,7 @@ import logging
 def main():
     logger = telebot.logger
     telebot.logger.setLevel(logging.DEBUG)
+    logging.info('Commence logging.')
 
     #  Parsing Chat ID argument
     arg_parser = ArgumentParser(
