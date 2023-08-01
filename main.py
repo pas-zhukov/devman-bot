@@ -36,14 +36,14 @@ def main():
     args = arg_parser.parse_args()
     chat_id = args.id
 
-    logger.addHandler(TGLogsHandler)
-    logging.debug(f'Chat id id: {chat_id}')
-
     load_dotenv()
     api_token = os.getenv("BOT_TOKEN")
 
     #  Launching the bot.
     bot = telebot.TeleBot(api_token)
+
+    logger.addHandler(TGLogsHandler(bot, chat_id))
+    logging.debug(f'Bot is launched. Chat id is {chat_id}.')
 
     #  Request URL and parameters setup.
     dvmn_lpoll_url = "https://dvmn.org/api/long_polling/"
