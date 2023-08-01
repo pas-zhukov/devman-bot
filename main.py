@@ -4,9 +4,13 @@ from argparse import ArgumentParser
 from dotenv import load_dotenv
 import requests
 import telebot
+import logging
 
 
 def main():
+    logger = telebot.logger
+    telebot.logger.setLevel(logging.DEBUG)
+
     #  Parsing Chat ID argument
     arg_parser = ArgumentParser(
         description='Бот для уведомлений о проверке заданий на dvmn.org'
