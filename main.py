@@ -15,7 +15,7 @@ class TGLogsHandler(logging.Handler):
 
     def emit(self, record):
         log_entry = self.format(record)
-        self.bot.send_message(chat_id=self.chat_id, text=log_entry)
+        msg = self.bot.send_message(self.chat_id, log_entry)
 
 
 def main():
