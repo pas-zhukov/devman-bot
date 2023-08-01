@@ -7,6 +7,17 @@ import telebot
 import logging
 
 
+class TGLogsHandler(logging.Handler):
+    def __init__(self, bot: telebot.TeleBot, chat_id: int):
+        super().__init__()
+        self.bot = bot
+        self.chat_id = chat_id
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.bot.send_message(chat_id=self.chat_id, text=log_entry)
+
+
 def main():
     logger = telebot.logger
     logging.basicConfig(level=logging.DEBUG)
@@ -24,6 +35,8 @@ def main():
     )
     args = arg_parser.parse_args()
     chat_id = args.id
+
+    logger.addHandler(TGLogsHandler)
     logging.debug(f'Chat id id: {chat_id}')
 
     load_dotenv()
