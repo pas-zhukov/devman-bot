@@ -8,9 +8,9 @@ import logging
 
 
 class TGLogsHandler(logging.Handler):
-    def __init__(self, bot: telebot.TeleBot, chat_id: int or str):
+    def __init__(self, bot_token: str, chat_id: int or str):
         super().__init__()
-        self.bot = bot
+        self.bot = telebot.TeleBot(bot_token)
         self.chat_id = chat_id
 
     def emit(self, record):
@@ -18,14 +18,7 @@ class TGLogsHandler(logging.Handler):
         msg = self.bot.send_message(self.chat_id, log_entry)
 
 
-def main():
-    load_dotenv()
-    logger = logging.getLogger('Bot')
-    logging.basicConfig(level=logging.INFO)
-    logger.setLevel(logging.DEBUG)
-    telebot.logger.setLevel(logging.INFO)
-    logger.info('Commence logging.')
-
+def main(logger):
     #  Parsing Chat ID argument
     arg_parser = ArgumentParser(
         description='Бот для уведомлений о проверке заданий на dvmn.org'
@@ -37,16 +30,11 @@ def main():
     )
     args = arg_parser.parse_args()
     chat_id = args.id
-    admin_id = os.getenv("ADMIN_CHAT_ID")
     api_token = os.getenv("BOT_TOKEN")
-
+    print(1 / 0)
     #  Launching the bot.
     bot = telebot.TeleBot(api_token)
-
-    #  Now we can add handlers to loggers
-    logger.addHandler(TGLogsHandler(bot, admin_id))
-    telebot.logger.addHandler(TGLogsHandler(bot, admin_id))
-    logger.debug(f'Bot is launched, custom handler activated. Admin chat id is {chat_id}.')
+    logger.debug(f'Bot is launched. Chat id is {chat_id}.')
 
     #  Request URL and parameters setup.
     dvmn_lpoll_url = "https://dvmn.org/api/long_polling/"
@@ -56,31 +44,28 @@ def main():
     timestamp_param = {}
 
     #  Commence polling.
-    try:
-        while True:
+    while True:
+        try:
+            dvmn_lpoll_response = requests.get(
+                dvmn_lpoll_url,
+                headers=auth_token_header,
+                params=timestamp_param
+            )
+        except requests.exceptions.ReadTimeout:
+            continue
+        except requests.exceptions.ConnectionError:
+            continue
+        dvmn_lpoll_response.raise_for_status()
+        print(1/0)
+        reviews = dvmn_lpoll_response.json()
+        if reviews["status"] == "timeout":
+            timestamp_param['timestamp'] = reviews["timestamp_to_request"]
+        elif reviews["status"] == "found":
             try:
-                dvmn_lpoll_response = requests.get(
-                    dvmn_lpoll_url,
-                    headers=auth_token_header,
-                    params=timestamp_param
-                )
-            except requests.exceptions.ReadTimeout:
-                continue
-            except requests.exceptions.ConnectionError:
-                continue
-            dvmn_lpoll_response.raise_for_status()
-
-            reviews = dvmn_lpoll_response.json()
-            if reviews["status"] == "timeout":
-                timestamp_param['timestamp'] = reviews["timestamp_to_request"]
-            elif reviews["status"] == "found":
-                try:
-                    send_notification(bot, chat_id, reviews)
-                except Exception as err:
-                    logger.error(f'Error sending notification: {err}')
-                timestamp_param['timestamp'] = reviews["last_attempt_timestamp"]
-    except Exception as err:
-        logger.exception(err)
+                send_notification(bot, chat_id, reviews)
+            except Exception as err:
+                logger.error(f'Error sending notification: {err}')
+            timestamp_param['timestamp'] = reviews["last_attempt_timestamp"]
 
 
 def send_notification(bot: telebot.TeleBot, chat_id: int, reviews: dict):
@@ -115,4 +100,21 @@ def send_notification(bot: telebot.TeleBot, chat_id: int, reviews: dict):
 
 
 if __name__ == "__main__":
-    main()
+    load_dotenv()
+    admin_id = os.getenv("ADMIN_CHAT_ID")
+    api_token = os.getenv("BOT_TOKEN")
+
+    logger = logging.getLogger('Bot')
+    logging.basicConfig(level=logging.INFO)
+    logger.setLevel(logging.DEBUG)
+    telebot.logger.setLevel(logging.INFO)
+    logger.info('Commence logging.')
+
+    logger.addHandler(TGLogsHandler(api_token, admin_id))
+    telebot.logger.addHandler(TGLogsHandler(api_token, admin_id))
+
+    try:
+        main(logger)
+    except Exception as err:
+        logger.error('Бот упал с ошибкой. Перезапуск...')
+        logger.exception(err)
