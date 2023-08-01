@@ -31,7 +31,7 @@ def main(logger):
     args = arg_parser.parse_args()
     chat_id = args.id
     api_token = os.getenv("BOT_TOKEN")
-    print(1 / 0)
+
     #  Launching the bot.
     bot = telebot.TeleBot(api_token)
     logger.debug(f'Bot is launched. Chat id is {chat_id}.')
@@ -56,7 +56,7 @@ def main(logger):
         except requests.exceptions.ConnectionError:
             continue
         dvmn_lpoll_response.raise_for_status()
-        print(1/0)
+
         reviews = dvmn_lpoll_response.json()
         if reviews["status"] == "timeout":
             timestamp_param['timestamp'] = reviews["timestamp_to_request"]
