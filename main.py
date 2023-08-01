@@ -8,7 +8,7 @@ import logging
 
 
 class TGLogsHandler(logging.Handler):
-    def __init__(self, bot: telebot.TeleBot, chat_id: int):
+    def __init__(self, bot: telebot.TeleBot, chat_id: int or str):
         super().__init__()
         self.bot = bot
         self.chat_id = chat_id
@@ -19,10 +19,12 @@ class TGLogsHandler(logging.Handler):
 
 
 def main():
-    logger = telebot.logger
-    logging.basicConfig(level=logging.DEBUG)
-    telebot.logger.setLevel(logging.DEBUG)
-    logging.info('Commence logging.')
+    load_dotenv()
+    logger = logging.getLogger('Bot')
+    logging.basicConfig(level=logging.INFO)
+    logger.setLevel(logging.DEBUG)
+    telebot.logger.setLevel(logging.INFO)
+    logger.info('Commence logging.')
 
     #  Parsing Chat ID argument
     arg_parser = ArgumentParser(
@@ -35,15 +37,16 @@ def main():
     )
     args = arg_parser.parse_args()
     chat_id = args.id
-
-    load_dotenv()
+    admin_id = os.getenv("ADMIN_CHAT_ID")
     api_token = os.getenv("BOT_TOKEN")
 
     #  Launching the bot.
     bot = telebot.TeleBot(api_token)
 
-    logger.addHandler(TGLogsHandler(bot, chat_id))
-    logging.debug(f'Bot is launched. Chat id is {chat_id}.')
+    #  Now we can add handlers to loggers
+    logger.addHandler(TGLogsHandler(bot, admin_id))
+    telebot.logger.addHandler(TGLogsHandler(bot, admin_id))
+    logger.debug(f'Bot is launched, custom handler activated. Admin chat id is {chat_id}.')
 
     #  Request URL and parameters setup.
     dvmn_lpoll_url = "https://dvmn.org/api/long_polling/"
@@ -53,28 +56,31 @@ def main():
     timestamp_param = {}
 
     #  Commence polling.
-    while True:
-        try:
-            dvmn_lpoll_response = requests.get(
-                dvmn_lpoll_url,
-                headers=auth_token_header,
-                params=timestamp_param
-            )
-        except requests.exceptions.ReadTimeout:
-            continue
-        except requests.exceptions.ConnectionError:
-            continue
-        dvmn_lpoll_response.raise_for_status()
-
-        reviews = dvmn_lpoll_response.json()
-        if reviews["status"] == "timeout":
-            timestamp_param['timestamp'] = reviews["timestamp_to_request"]
-        elif reviews["status"] == "found":
+    try:
+        while True:
             try:
-                send_notification(bot, chat_id, reviews)
-            except Exception as e:
-                print(f'Error sending notification: {e}')
-            timestamp_param['timestamp'] = reviews["last_attempt_timestamp"]
+                dvmn_lpoll_response = requests.get(
+                    dvmn_lpoll_url,
+                    headers=auth_token_header,
+                    params=timestamp_param
+                )
+            except requests.exceptions.ReadTimeout:
+                continue
+            except requests.exceptions.ConnectionError:
+                continue
+            dvmn_lpoll_response.raise_for_status()
+
+            reviews = dvmn_lpoll_response.json()
+            if reviews["status"] == "timeout":
+                timestamp_param['timestamp'] = reviews["timestamp_to_request"]
+            elif reviews["status"] == "found":
+                try:
+                    send_notification(bot, chat_id, reviews)
+                except Exception as err:
+                    logger.error(f'Error sending notification: {err}')
+                timestamp_param['timestamp'] = reviews["last_attempt_timestamp"]
+    except Exception as err:
+        logger.exception(err)
 
 
 def send_notification(bot: telebot.TeleBot, chat_id: int, reviews: dict):
@@ -100,7 +106,6 @@ def send_notification(bot: telebot.TeleBot, chat_id: int, reviews: dict):
 
         Ссылка на урок: {attempt['lesson_url']}
     """
-
     msg = bot.send_message(
         chat_id,
         tw.dedent(notification_text),
