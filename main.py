@@ -6,6 +6,8 @@ import requests
 import telebot
 import logging
 
+logger = logging.getLogger('TeleBot')
+
 
 class TGLogsHandler(logging.Handler):
     def __init__(self, bot_token: str, chat_id: int or str):
@@ -18,7 +20,16 @@ class TGLogsHandler(logging.Handler):
         msg = self.bot.send_message(self.chat_id, log_entry)
 
 
-def main(logger):
+def main():
+    load_dotenv()
+    api_token = os.getenv("BOT_TOKEN")
+    admin_id = os.getenv("ADMIN_CHAT_ID")
+
+    logging.basicConfig(level=logging.INFO)
+    logger.setLevel(logging.INFO)
+    logger.info('Commence logging.')
+    logger.addHandler(TGLogsHandler(api_token, admin_id))
+
     arg_parser = ArgumentParser(
         description='Бот для уведомлений о проверке заданий на dvmn.org'
     )
@@ -29,7 +40,6 @@ def main(logger):
     )
     args = arg_parser.parse_args()
     chat_id = args.id
-    api_token = os.getenv("BOT_TOKEN")
 
     bot = telebot.TeleBot(api_token)
     logger.debug(f'Bot is launched. Chat id is {chat_id}.')
@@ -96,21 +106,4 @@ def send_notification(bot: telebot.TeleBot, chat_id: int, reviews: dict):
 
 
 if __name__ == "__main__":
-    load_dotenv()
-    admin_id = os.getenv("ADMIN_CHAT_ID")
-    api_token = os.getenv("BOT_TOKEN")
-
-    logger = logging.getLogger('Bot')
-    logging.basicConfig(level=logging.INFO)
-    logger.setLevel(logging.DEBUG)
-    telebot.logger.setLevel(logging.INFO)
-    logger.info('Commence logging.')
-
-    logger.addHandler(TGLogsHandler(api_token, admin_id))
-    telebot.logger.addHandler(TGLogsHandler(api_token, admin_id))
-
-    try:
-        main(logger)
-    except Exception as err:
-        logger.error('Бот упал с ошибкой. Перезапуск...')
-        logger.exception(err)
+    main()
