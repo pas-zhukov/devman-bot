@@ -61,7 +61,11 @@ def main():
             continue
         except requests.exceptions.ConnectionError:
             continue
-        dvmn_lpoll_response.raise_for_status()
+        try:
+            dvmn_lpoll_response.raise_for_status()
+        except requests.HTTPError as err:
+            logger.error('Бот упал с ошибкой')
+            logger.exception(err)
 
         reviews = dvmn_lpoll_response.json()
         if reviews["status"] == "timeout":
@@ -69,8 +73,9 @@ def main():
         elif reviews["status"] == "found":
             try:
                 send_notification(bot, chat_id, reviews)
-            except Exception as err:
+            except TypeError or IndexError or requests.HTTPError as err:
                 logger.error(f'Error sending notification: {err}')
+                logger.exception(err)
             timestamp_param['timestamp'] = reviews["last_attempt_timestamp"]
 
 
