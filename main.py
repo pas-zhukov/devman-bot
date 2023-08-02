@@ -19,7 +19,6 @@ class TGLogsHandler(logging.Handler):
 
 
 def main(logger):
-    #  Parsing Chat ID argument
     arg_parser = ArgumentParser(
         description='Бот для уведомлений о проверке заданий на dvmn.org'
     )
@@ -32,18 +31,15 @@ def main(logger):
     chat_id = args.id
     api_token = os.getenv("BOT_TOKEN")
 
-    #  Launching the bot.
     bot = telebot.TeleBot(api_token)
     logger.debug(f'Bot is launched. Chat id is {chat_id}.')
 
-    #  Request URL and parameters setup.
     dvmn_lpoll_url = "https://dvmn.org/api/long_polling/"
     auth_token_header = {
         "Authorization": os.getenv("DVMN_TOKEN")
     }
     timestamp_param = {}
 
-    #  Commence polling.
     while True:
         try:
             dvmn_lpoll_response = requests.get(
