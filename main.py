@@ -73,7 +73,7 @@ def main():
         elif reviews["status"] == "found":
             try:
                 send_notification(bot, chat_id, reviews)
-            except TypeError or IndexError or requests.HTTPError as err:
+            except requests.HTTPError or requests.ConnectionError as err:
                 logger.error(f'Error sending notification: {err}')
                 logger.exception(err)
             timestamp_param['timestamp'] = reviews["last_attempt_timestamp"]
