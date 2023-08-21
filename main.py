@@ -1,7 +1,6 @@
-import os
+from environs import Env
 import textwrap as tw
 from argparse import ArgumentParser
-from dotenv import load_dotenv
 import requests
 import telebot
 import logging
@@ -21,9 +20,10 @@ class TGLogsHandler(logging.Handler):
 
 
 def main():
-    load_dotenv()
-    api_token = os.getenv("BOT_TOKEN")
-    admin_id = os.getenv("ADMIN_CHAT_ID")
+    env = Env()
+    env.read_env()
+    api_token = env.str("BOT_TOKEN")
+    admin_id = env.int("ADMIN_CHAT_ID")
 
     logging.basicConfig(level=logging.INFO)
     logger.setLevel(logging.INFO)
@@ -35,21 +35,21 @@ def main():
     )
     arg_parser.add_argument(
         '--id',
-        help="ID чата, в который будут отправляться уведомления.",
+        help="ID чата, в который будут отправляться уведомления. This function is deprecated. Use env vars instead.",
         type=int
     )
     args = arg_parser.parse_args()
     if args.id:
         chat_id = args.id
     else:
-        chat_id = os.getenv('USER_ID')
+        chat_id = env.int('USER_ID')
 
     bot = telebot.TeleBot(api_token)
-    logger.debug(f'Bot is launched. Chat id is {chat_id}.')
+    logger.info(f'Bot is launched. Chat id is {chat_id}.')
 
     dvmn_lpoll_url = "https://dvmn.org/api/long_polling/"
     auth_token_header = {
-        "Authorization": os.getenv("DVMN_TOKEN")
+        "Authorization": env.str("DVMN_TOKEN")
     }
     timestamp_param = {}
 
