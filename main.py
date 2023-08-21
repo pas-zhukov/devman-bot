@@ -34,12 +34,15 @@ def main():
         description='Бот для уведомлений о проверке заданий на dvmn.org'
     )
     arg_parser.add_argument(
-        'id',
+        '--id',
         help="ID чата, в который будут отправляться уведомления.",
         type=int
     )
     args = arg_parser.parse_args()
-    chat_id = args.id
+    if args.id:
+        chat_id = args.id
+    else:
+        chat_id = os.getenv('USER_ID')
 
     bot = telebot.TeleBot(api_token)
     logger.debug(f'Bot is launched. Chat id is {chat_id}.')
